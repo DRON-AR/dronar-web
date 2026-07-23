@@ -1,0 +1,23 @@
+name: Alerts Scan (cron)
+
+# Cierra el pendiente del Bloque 7: /api/alerts/scan necesita algo externo
+# que lo llame periódicamente. Cada 15 minutos es un punto de partida
+# razonable — ajustar según qué tan urgentes sean las alertas (p. ej.
+# GO_NO_GO_BLOCKED ya no depende de esto, se genera al instante vía
+# trigger de base de datos; esto es para las 3 reglas de escaneo).
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/alerts/scan
+        run: |
+          curl -f -sS -X POST "${BACKEND_STAGING_URL}/api/alerts/scan" \
+            -H "x-scan-secret: ${ALERTS_SCAN_SECRET}"
+        env:
+          BACKEND_STAGING_URL: ${{ secrets.BACKEND_STAGING_URL }}
+          ALERTS_SCAN_SECRET: ${{ secrets.ALERTS_SCAN_SECRET }}

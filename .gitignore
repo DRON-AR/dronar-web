@@ -1,0 +1,34 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Build
+.next/
+dist/
+build/
+out/
+
+# Env — NUNCA commitear
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Certificados generados (contienen datos personales)
+backend/tmp/certificates/*
+!backend/tmp/certificates/.gitkeep
+
+# Coverage / tests
+coverage/
+*.tsbuildinfo

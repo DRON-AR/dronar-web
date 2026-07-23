@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+
+  backend-docker-build:
+    runs-on: ubuntu-latest
+    # Valida que backend/Dockerfile realmente construye (incluye la
+    # instalación de Chromium para Puppeteer-core). No se pudo verificar
+    # esto en el entorno que generó el proyecto porque Docker Hub estaba
+    # bloqueado por su política de red — GitHub Actions sí tiene acceso.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image (sin publicar)
+        run: docker build -t dronar-backend:ci -f backend/Dockerfile backend
+
+  supabase-migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dronar
+          POSTGRES_PASSWORD: dronar
+          POSTGRES_DB: dronar_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: dronar
+      PGHOST: localhost
+      PGUSER: dronar
+      PGDATABASE: dronar_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar stub de auth/storage local + las 17 migraciones
+        run: |
+          set -e
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/000_local_dev_auth_stub.sql
+          for f in supabase/migrations/*.sql; do
+            echo "Aplicando $f"
+            psql -v ON_ERROR_STOP=1 -f "$f"
+          done
+      - name: Correr las 6 suites de pruebas SQL (falla si aparece "FALLÓ" en la salida)
+        run: |
+          set -e
+          for t in supabase/tests/00[1-6]*.test.sql; do
+            echo "=== $t ==="
+            OUTPUT=$(psql -v ON_ERROR_STOP=1 -f "$t" 2>&1)
+            echo "$OUTPUT"
+            if echo "$OUTPUT" | grep -q "FALLÓ"; then
+              echo "::error::Pruebas fallidas en $t"
+              exit 1
+            fi
+          done

@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aero-bg: #050b14;
+}
+
+html,
+body {
+  background-color: var(--aero-bg);
+  color-scheme: dark;
+}

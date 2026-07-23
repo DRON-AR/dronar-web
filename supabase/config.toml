@@ -1,0 +1,12 @@
+# Config mínima de Supabase CLI para desarrollo local.
+# El project_id real se setea al hacer `supabase link --project-ref <ref>`.
+project_id = "dronar-camper-aeronautical"
+
+[db]
+port = 54322
+
+[api]
+port = 54321
+
+[studio]
+port = 54323

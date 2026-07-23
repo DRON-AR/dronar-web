@@ -1,0 +1,69 @@
+# Render Blueprint — backend DRONAR (staging).
+# Crear vía: Render Dashboard > New > Blueprint > seleccionar este repo.
+# Las variables marcadas con `sync: false` se completan a mano en el
+# dashboard de Render (nunca se commitean valores reales aquí).
+
+services:
+  - type: web
+    name: dronar-backend-staging
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+
+      # CORS — debe apuntar al dominio ESTABLE de staging del frontend
+      # (un alias de rama en Vercel, no la URL efímera de cada deploy).
+      - key: FRONTEND_ORIGIN
+        sync: false
+
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+      - key: CLAUDE_API_KEY
+        sync: false
+      - key: CLAUDE_MODEL
+        sync: false
+      - key: CLAUDE_RATE_LIMIT_MAX
+        value: "10"
+      - key: CLAUDE_RATE_LIMIT_WINDOW
+        value: "1 minute"
+
+      # PUPPETEER_EXECUTABLE_PATH ya viene fijado en el Dockerfile
+      # (/usr/bin/chromium) — no hace falta repetirlo aquí.
+
+      - key: SMTP_URL
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: ALERT_WEBHOOK_URL
+        sync: false
+      - key: ALERT_WEBHOOK_SECRET
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: ALERTS_SCAN_SECRET
+        sync: false
+      - key: MEDICAL_EXPIRING_DAYS_THRESHOLD
+        value: "30"
+      - key: PRE_FLIGHT_PENDING_HOURS_THRESHOLD
+        value: "24"
+
+      - key: SENTRY_DSN
+        sync: false
